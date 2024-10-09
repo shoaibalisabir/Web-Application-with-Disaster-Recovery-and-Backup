@@ -5,114 +5,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>To-Do List with Authentication</title>
     <style>
-        /* Reset default browser styles */
-        * {
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            color: #333;
         }
-
         .container {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
+            max-width: 500px;
             width: 100%;
-            text-align: center;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            box-sizing: border-box;
         }
-
         h1 {
             color: #007bff;
             margin-bottom: 20px;
-            font-size: 24px;
+            text-align: center;
         }
-
-        input {
-            width: 100%;
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        input, button {
+            width: calc(100% - 20px);
             padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
+            margin: 5px 0;
             border-radius: 4px;
-            font-size: 16px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
         }
-
-        input:focus {
-            border-color: #007bff;
+        input:focus, button:focus {
             outline: none;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
-
         button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
             background-color: #007bff;
-            color: #fff;
+            color: white;
             border: none;
-            border-radius: 4px;
-            font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            font-size: 16px;
         }
-
         button:hover {
             background-color: #0056b3;
         }
-
-        button:disabled {
-            background-color: #ddd;
-            cursor: not-allowed;
-        }
-
-        p {
-            margin-top: 10px;
-            font-size: 14px;
-            color: #dc3545;
-        }
-
         #tasks {
-            list-style: none;
+            list-style-type: none;
             padding: 0;
             margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
         }
-
         #tasks li {
-            padding: 12px;
-            background-color: #f8f9fa;
+            padding: 10px;
+            background: #f8f9fa;
             margin-bottom: 10px;
-            border: 1px solid #ccc;
             border-radius: 4px;
-            text-align: left;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
-
-        #tasks li.completed {
+        #tasks li:hover {
+            background-color: #e2e6ea;
+        }
+        .task-text {
+            flex: 1;
+        }
+        .completed .task-text {
             text-decoration: line-through;
             color: #6c757d;
         }
-
-        #logoutBtn {
-            background-color: #dc3545;
+        .hidden {
+            display: none;
         }
-
-        #logoutBtn:hover {
-            background-color: #c82333;
-        }
-
         #loginStatus {
             color: #dc3545;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .delete-icon {
+            cursor: pointer;
+            color: #dc3545;
+            font-size: 20px;
+            margin-left: 10px;
+        }
+        .delete-icon:hover {
+            color: #c82333;
         }
     </style>
 </head>
@@ -120,72 +110,170 @@
     <div class="container">
         <h1>To-Do List</h1>
         <div id="authSection">
-            <input id="username" type="text" placeholder="Username">
-            <input id="password" type="password" placeholder="Password">
+            <h2>Login or Register</h2>
+            <input type="text" id="username" placeholder="Username" />
+            <input type="password" id="password" placeholder="Password" />
             <button id="loginBtn">Login</button>
             <button id="registerBtn">Register</button>
-            <p id="loginStatus"></p>
+            <div id="loginStatus"></div>
         </div>
-
-        <div id="taskSection" style="display:none;">
-            <input id="newTask" type="text" placeholder="New Task">
+        <div id="taskSection" class="hidden">
+            <input type="text" id="taskInput" placeholder="New task..." />
             <button id="addTaskBtn">Add Task</button>
             <ul id="tasks"></ul>
             <button id="logoutBtn">Logout</button>
         </div>
     </div>
-
     <script>
         const taskApiUrl = 'http://localhost:3000/tasks';
         const userApiUrl = 'http://localhost:3001';
+        
 
-        let currentUserId = null;
 
-        document.getElementById('loginBtn').addEventListener('click', async () => {
+
+    console.log(taskApiUrl);
+    console.log(userApiUrl);
+    
+
+        let currentUserId = localStorage.getItem('userId');
+
+        function initializeUI() {
+            if (currentUserId) {
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('taskSection').classList.remove('hidden');
+                fetchTasks();
+            } else {
+                document.getElementById('authSection').classList.remove('hidden');
+                document.getElementById('taskSection').classList.add('hidden');
+            }
+        }
+
+        function fetchTasks() {
+            fetch(`${taskApiUrl}?userId=${currentUserId}`)
+              .then(response => response.json())
+              .then(data => {
+                const tasksList = document.getElementById('tasks');
+                tasksList.innerHTML = '';
+                if (Array.isArray(data)) {
+                  data.forEach(task => {
+                    const taskItem = document.createElement('li');
+                    taskItem.className = task.completed ? 'completed' : '';
+                    taskItem.innerHTML = `
+                      <span class="task-text">${task.name}</span>
+                      <span class="delete-icon" onclick="deleteTask('${task._id}')" title="Delete">&#x1F5D1;</span>
+                    `;
+                    taskItem.addEventListener('click', () => toggleTaskCompletion(taskItem));
+                    tasksList.appendChild(taskItem);
+                  });
+                } else {
+                  console.error('Expected an array but received:', data);
+                }
+              })
+              .catch(error => console.error('Error fetching tasks:', error));
+          }
+
+        function toggleTaskCompletion(taskItem) {
+            taskItem.classList.toggle('completed');
+        }
+
+        function addTask(taskName) {
+            fetch(taskApiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId: currentUserId, name: taskName }),
+            })
+            .then(response => response.json())
+            .then(() => fetchTasks())
+            .catch(error => console.error('Error adding task:', error));
+        }
+
+        function deleteTask(taskId) {
+            fetch(`${taskApiUrl}/${taskId}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ userId: currentUserId }),
+            }).then(() => {
+              fetchTasks();
+            })
+            .catch(error => console.error('Error deleting task:', error));
+        }
+
+        document.getElementById('registerBtn').addEventListener('click', () => {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const res = await fetch(`${userApiUrl}/login`, {
+            fetch(`${userApiUrl}/register`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                currentUserId = data.user._id;
-                showTasks();
-            } else {
-                document.getElementById('loginStatus').textContent = data.message;
-            }
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loginStatus').textContent = 'Registration successful! Please log in.';
+            })
+            .catch(error => console.error('Error registering user:', error));
         });
 
-        function showTasks() {
-            document.getElementById('authSection').style.display = 'none';
-            document.getElementById('taskSection').style.display = 'block';
-            fetchTasks();
-        }
-
-        async function fetchTasks() {
-            const res = await fetch(`${taskApiUrl}?userId=${currentUserId}`);
-            const tasks = await res.json();
-            const taskList = document.getElementById('tasks');
-            taskList.innerHTML = tasks.map(task => `<li>${task.name}</li>`).join('');
-        }
-
-        document.getElementById('addTaskBtn').addEventListener('click', async () => {
-            const newTask = document.getElementById('newTask').value;
-            await fetch(taskApiUrl, {
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            fetch(`${userApiUrl}/login`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: currentUserId, name: newTask })
-            });
-            fetchTasks();
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            }).then(response => response.json())
+            .then(data => {
+                if (data.message === 'Login successful' && data.user && data.user._id) {
+                    currentUserId = data.user._id;
+                    localStorage.setItem('userId', currentUserId);
+                    document.getElementById('loginStatus').textContent = 'Login successful!';
+                    document.getElementById('authSection').classList.add('hidden');
+                    document.getElementById('taskSection').classList.remove('hidden');
+                    fetchTasks();
+                } else {
+                    document.getElementById('loginStatus').textContent = 'Login failed! Please check your credentials.';
+                }
+            })
+            .catch(error => console.error('Error during login:', error));
         });
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             currentUserId = null;
-            document.getElementById('authSection').style.display = 'block';
-            document.getElementById('taskSection').style.display = 'none';
+            localStorage.removeItem('userId');
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('taskSection').classList.add('hidden');
+            document.getElementById('loginStatus').textContent = 'You have logged out.';
+        
+            // Clear username and password fields on logout
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
         });
+        
+
+        document.getElementById('addTaskBtn').addEventListener('click', () => {
+            const taskInput = document.getElementById('taskInput').value;
+            if (taskInput) {
+                addTask(taskInput);
+                document.getElementById('taskInput').value = '';
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            currentUserId = null;
+            localStorage.removeItem('userId');
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('taskSection').classList.add('hidden');
+            document.getElementById('loginStatus').textContent = 'You have logged out.';
+        });
+
+        initializeUI();
     </script>
 </body>
 </html>
