@@ -201,11 +201,43 @@
             })
             .catch(error => console.error('Error deleting task:', error));
         }
-
         document.getElementById('registerBtn').addEventListener('click', () => {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+        
             fetch(`${userApiUrl}/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    // If response is not okay, throw an error
+                    return response.json().then(errData => { 
+                        throw new Error(errData.message || 'Error registering user.'); 
+                    });
+                }
+                return response.json(); // Parse the JSON response
+            })
+            .then(data => {
+                document.getElementById('loginStatus').textContent = data.message; // Show success message
+            })
+            .catch(error => {
+                console.error('Error registering user:', error);
+                document.getElementById('loginStatus').textContent = error.message; // Show the error message
+            });
+        });
+        
+        
+        
+
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            fetch(`${userApiUrl}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -214,35 +246,22 @@
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('loginStatus').textContent = 'Registration successful! Please log in.';
-            })
-            .catch(error => console.error('Error registering user:', error));
-        });
-
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            fetch(`${userApiUrl}/login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, password }),
-            }).then(response => response.json())
-            .then(data => {
-                if (data.message === 'Login successful' && data.user && data.user._id) {
-                    currentUserId = data.user._id;
+                // Check for a successful login message
+                if (data.message === 'Login successful' && data.user) {
+                    // You can store the username or any user-specific identifier in localStorage
+                    currentUserId = data.user.username; // or use another identifier if you have
                     localStorage.setItem('userId', currentUserId);
                     document.getElementById('loginStatus').textContent = 'Login successful!';
                     document.getElementById('authSection').classList.add('hidden');
                     document.getElementById('taskSection').classList.remove('hidden');
-                    fetchTasks();
+                    fetchTasks(); // Fetch tasks if the user is logged in
                 } else {
                     document.getElementById('loginStatus').textContent = 'Login failed! Please check your credentials.';
                 }
             })
             .catch(error => console.error('Error during login:', error));
         });
+        
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             currentUserId = null;

@@ -1,0 +1,1 @@
+"An error occurred (InvalidParameterValue) when calling the CreateDBSnapshot operation: The specified instance is a member of a cluster and a snapshot cannot be created directly. Please use the CreateDBClusterSnapshot API instead."

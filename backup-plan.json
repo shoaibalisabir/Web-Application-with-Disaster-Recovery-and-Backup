@@ -1,0 +1,18 @@
+{
+    "BackupPlan":{
+      "BackupPlanName":"Test-Backup-Plan",
+      "Rules":[
+        {
+          "RuleName":"DailyBackups",
+          "TargetBackupVaultName":"todolist-valut",
+          "ScheduleExpression":"cron(0 1 ? * * *)",
+          "ScheduleExpressionTimezone":"America/Los_Angeles",
+          "StartWindowMinutes":60,
+          "CompletionWindowMinutes":120, 
+          "Lifecycle":{
+            "DeleteAfterDays":14
+          }
+        }
+      ]
+    }
+  }
