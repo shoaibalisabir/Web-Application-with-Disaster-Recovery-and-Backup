@@ -27,3 +27,7 @@ The primary goal of this project is to implement a robust disaster recovery and 
 - Manual snapshot creation via AWS Lambda function.
 - Multi-AZ deployment for high availability and failover.
 - Monitoring and alerting setup via AWS CloudWatch.
+![1](https://github.com/user-attachments/assets/ec15e5a9-87ce-47b0-a41d-615ca94b36be)
+![3](https://github.com/user-attachments/assets/cc9df123-282b-4d17-9cc0-bb4ebe5fca67)
+![2](https://github.com/user-attachments/assets/32b1865f-0d31-479b-86b0-a5a747711105)
+
